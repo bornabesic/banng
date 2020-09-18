@@ -77,7 +77,8 @@ array_1d<T> search_index(const index<T> *i, const array_1d<T> &query) {
 
 template <typename T>
 void free_index(const index<T> *i) {
-    delete i->left;
-    delete i->right;
+    if (i == nullptr) return;
+    free_index(i->left);
+    free_index(i->right);
     delete i;
 }

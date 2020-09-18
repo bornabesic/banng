@@ -32,6 +32,7 @@ int main(void) {
     std::cout << "Result:" << '\n';
     print_array_1d(result_array);
 
+    free_index(i);
     free_array_2d(array);
     return 0;
 }

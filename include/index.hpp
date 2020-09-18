@@ -74,3 +74,10 @@ array_1d<T> search_index(const index<T> *i, const array_1d<T> &query) {
     else
         return search_index(i->right, query);
 }
+
+template <typename T>
+void free_index(const index<T> *i) {
+    delete i->left;
+    delete i->right;
+    delete i;
+}

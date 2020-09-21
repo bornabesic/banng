@@ -54,7 +54,7 @@ struct array_1d<T> as_array_1d(T *data, unsigned int length) {
 
 template <typename T>
 void print_array_1d(const struct array_1d<T> &array) {
-    for (int i = 0; i < array.length; ++i)
+    for (unsigned int i = 0; i < array.length; ++i)
         std::cout << array.data[i] << ' ';
     std::cout << '\n';
 }

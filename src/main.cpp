@@ -15,7 +15,7 @@ int main(void) {
     Stopwatch stopwatch;
 
     stopwatch.checkpoint();
-    for (int i = 0; i < n * d; ++i)
+    for (unsigned int i = 0; i < n * d; ++i)
         array.data[0][i] = random_normal();
     std::cout << "Random data generation for " << n << " x " << d << " array took " << stopwatch.checkpoint() << " s" << '\n';
     std::cout << n * d * sizeof(float) / 1024.f / 1024.f << " MB" << '\n';

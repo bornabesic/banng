@@ -9,20 +9,22 @@ template <typename T>
 struct Array2d {
     T **data;
     unsigned int rows, cols;
+
+    static Array2d<T> allocate(unsigned int rows, unsigned int cols) {
+        T *data = new T[rows * cols];
+        T **row_ptrs = new T *[rows];
+        for (unsigned int i = 0; i < rows; ++i)
+            row_ptrs[i] = data + i * cols;
+
+        assert(&row_ptrs[rows - 1][cols - 1] - &row_ptrs[0][0] + 1 == rows * cols);
+        return {row_ptrs, rows, cols};
+    }
+
+    static void free(const Array2d<T> &array) {
+        delete array.data[0];
+        delete array.data;
+    }
 };
-
-template <typename T>
-Array2d<T> allocate_array_2d(const unsigned int rows,
-                              const unsigned int cols) {
-
-    T *data = new T[rows * cols];
-    T **row_ptrs = new T *[rows];
-    for (unsigned int i = 0; i < rows; ++i)
-        row_ptrs[i] = data + i * cols;
-
-    assert(&row_ptrs[rows - 1][cols - 1] - &row_ptrs[0][0] + 1 == rows * cols);
-    return {row_ptrs, rows, cols};
-}
 
 template <typename T>
 void print_array(const Array2d<T> &array) {
@@ -31,12 +33,6 @@ void print_array(const Array2d<T> &array) {
             std::cout << array.data[i][j] << ' ';
         std::cout << '\n';
     }
-}
-
-template <typename T>
-void free_array_2d(const Array2d<T> &array) {
-    delete array.data[0];
-    delete array.data;
 }
 
 // --------------------------------- 1D Array ---------------------------------

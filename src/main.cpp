@@ -47,7 +47,7 @@ float calculate_ann_accuracy(const Array2d<float> &array, Index<float, S> &index
 }
 
 int main(void) {
-    Array2d<float> array = allocate_array_2d<float>(n, d);
+    Array2d<float> array = Array2d<float>::allocate(n, d);
 
     Stopwatch stopwatch;
 
@@ -65,6 +65,6 @@ int main(void) {
     float accuracy = calculate_ann_accuracy(array, index);
     std::cout << "Accuracy: " << accuracy * 100.f << " %" << '\n';
 
-    free_array_2d(array);
+    Array2d<float>::free(array);
     return 0;
 }

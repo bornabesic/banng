@@ -58,7 +58,7 @@ class AxisAlignedSplit : public Split<T> {
         return {left, right};
     }
 
-    bool descend_left(const array_1d<T> &query) const {
+    bool descend_left(const array_1d<T> &query) const override {
         return (query.data[this->axis] < this->value);
     }
 };

@@ -58,3 +58,12 @@ void print_array_1d(const struct array_1d<T> &array) {
         std::cout << array.data[i] << ' ';
     std::cout << '\n';
 }
+
+template <typename T>
+bool all_close(const array_1d<T> &v1, const array_1d<T> &v2, T eps = 1e-6) {
+    assert(v1.length == v2.length);
+    for (unsigned int i = 0; i < v1.length; ++i)
+        if (v1.data[i] - v2.data[i] > eps)
+            return false;
+    return true;
+}

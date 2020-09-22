@@ -1,84 +1,128 @@
+#pragma once
 
-#include <array.hpp>
+#include <utility>
 #include <vector>
 
+#include <array.hpp>
+
 template <typename T>
-struct split_node {
+class Split {
+  protected:
+    unsigned int dimensionality;
+    unsigned int depth;
 
-    split_node(T value, unsigned int axis, struct split_node<T> *left,
-               struct split_node<T> *right)
-        : value(value), axis(axis), left(left), right(right), data(nullptr),
-          is_leaf(false){};
+  public:
+    Split(unsigned int dimensionality, unsigned int depth)
+        : dimensionality(dimensionality), depth(depth) {}
 
-    split_node(T *data)
-        : value(-1), axis(-1), left(nullptr), right(nullptr), data(data),
-          is_leaf(true){};
+    virtual std::pair<std::vector<T *> *, std::vector<T *> *>
+    split(T **data, const unsigned int n, const unsigned int d) = 0;
 
-    T value;
-    unsigned int axis;
-    struct split_node<T> *left;
-    struct split_node<T> *right;
-    T *data;
-    bool is_leaf;
+    virtual bool descend_left(const array_1d<T> &query) = 0;
 };
 
 template <typename T>
-struct split_node<T> *axis_aligned_split(T **data, const unsigned int n,
-                                         const unsigned int d,
-                                         const unsigned int axis) {
-    if (n < 2) {
-        assert(n == 1);
-        return new struct split_node<T>(*data);
+class AxisAlignedSplit : public Split<T> {
+  private:
+    unsigned int axis;
+    T value;
+
+  public:
+    AxisAlignedSplit(unsigned int dimensionality, unsigned int depth)
+        : Split<T>(dimensionality, depth) {
+        this->axis = depth % dimensionality;
+        this->value = 0;
     }
 
-    T sum = 0;
-    for (unsigned int i = 0; i < n; ++i)
-        sum += data[i][axis];
-    T mean = sum / n;
+    std::pair<std::vector<T *> *, std::vector<T *> *>
+    split(T **data, const unsigned int n, const unsigned int d) override {
+        T sum = 0;
+        for (unsigned int i = 0; i < n; ++i)
+            sum += data[i][this->axis];
+        T mean = sum / n;
+        this->value = mean;
 
-    std::vector<T *> left, right;
-    left.reserve(n / 2 + 1);
-    right.reserve(n / 2 + 1);
+        std::vector<T *> *left = new std::vector<T *>();
+        std::vector<T *> *right = new std::vector<T *>();
+        left->reserve(n / 2 + 1);
+        right->reserve(n / 2 + 1);
 
-    for (unsigned int i = 0; i < n; ++i) {
-        std::vector<T *> &destination = (data[i][axis] < mean) ? left : right;
-        destination.emplace_back(data[i]);
+        for (unsigned int i = 0; i < n; ++i) {
+            std::vector<T *> *destination =
+                (data[i][this->axis] < mean) ? left : right;
+            destination->emplace_back(data[i]);
+        }
+
+        left->shrink_to_fit();
+        right->shrink_to_fit();
+        return {left, right};
     }
 
-    left.shrink_to_fit();
-    right.shrink_to_fit();
-
-    unsigned int next_axis = (axis + 1) % d;
-    return new struct split_node<T>(
-        mean,
-        axis,
-        axis_aligned_split(left.data(), left.size(), d, next_axis),
-        axis_aligned_split(right.data(), right.size(), d, next_axis)
-    );
-}
+    bool descend_left(const array_1d<T> &query) {
+        return (query.data[this->axis] < this->value);
+    }
+};
 
 template <typename T>
-using index = split_node<T>;
+class Node {
+  public:
+    Split<T> *split;
+    Node<T> *left;
+    Node<T> *right;
+    bool is_leaf;
+    T *data;
 
-template <typename T> index<T> *build_index(const struct array_2d<T> &array) {
-    return axis_aligned_split(array.data, array.rows, array.cols, 0);
-}
+    Node(T *data)
+        : split(nullptr), data(data), left(nullptr), right(nullptr),
+          is_leaf(true) {}
+    Node(Split<T> *split, Node<T> *left, Node<T> *right)
+        : split(split), data(nullptr), left(left), right(right),
+          is_leaf(false) {}
+};
 
 template <typename T>
-array_1d<T> search_index(const index<T> *i, const array_1d<T> &query) {
-    if (i->is_leaf)
-        return as_array_1d(i->data, query.length);
+class Index {
+  private:
+    Node<T> *tree;
 
-    if (query.data[i->axis] < i->value)
-        return search_index(i->left, query);
-    else
-        return search_index(i->right, query);
-}
+    Node<T> *_build_tree(T **data, const unsigned int n, const unsigned int d,
+                         const unsigned int depth = 0) {
+        if (n < 2) {
+            assert(n == 1);
+            return new Node<T>(*data);
+        }
 
-template <typename T>
-void free_index(const index<T> *i) {
-    if (i == nullptr) return;
-    free_index(i->left);
-    free_index(i->right);
-    delete i;
-}
+        AxisAlignedSplit<T> *split = new AxisAlignedSplit<T>(d, depth); // TODO
+        auto subspaces = split->split(data, n, d);
+        Node<T> *node = new Node<T>(
+            split, this->_build_tree(subspaces.first->data(),
+                                     subspaces.first->size(), d, depth + 1),
+            this->_build_tree(subspaces.second->data(),
+                              subspaces.second->size(), d, depth + 1));
+        delete subspaces.first;
+        delete subspaces.second;
+        return node;
+    }
+
+    array_1d<T> _search_tree(const array_1d<T> &query, const Node<T> *tree) {
+        if (tree->is_leaf)
+            return as_array_1d(tree->data, query.length);
+
+        if (tree->split->descend_left(query))
+            return _search_tree(query, tree->left);
+        else
+            return _search_tree(query, tree->right);
+    }
+
+  public:
+    Index() : tree(nullptr) {}
+
+    void build(const array_2d<T> &array) {
+        this->tree = this->_build_tree(array.data, array.rows, array.cols);
+    }
+
+    array_1d<T> search(const array_1d<T> &query) {
+        return this->_search_tree(query, this->tree);
+    }
+};
+

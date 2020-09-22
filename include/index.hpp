@@ -80,9 +80,9 @@ class Node {
           is_leaf(false) {}
 };
 
-template <typename T, typename S>
+template <typename T, template <typename> typename S>
 class Index {
-  static_assert(std::is_base_of<Split<T>, S>::value, "Class S should be an instance of Split<T>!");
+  static_assert(std::is_base_of<Split<T>, S<T>>::value, "Class S<T> should be an instance of Split<T>!");
 
   private:
     Node<T> *tree;
@@ -94,7 +94,7 @@ class Index {
             return new Node<T>(*data);
         }
 
-        Split<T> *split = new S(d, depth);
+        Split<T> *split = new S<T>(d, depth);
         auto subspaces = split->split(data, n, d);
         Node<T> *node = new Node<T>(
             split, this->_build_tree(subspaces.first->data(),

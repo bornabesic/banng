@@ -10,7 +10,7 @@
 constexpr unsigned int n = 10000;
 constexpr unsigned int d = 8;
 
-inline array_1d<float> nearest_neighbor(const array_2d<float> &data, const array_1d<float> &query) {
+inline Array1d<float> nearest_neighbor(const Array2d<float> &data, const Array1d<float> &query) {
     assert(data.cols == query.length);
 
     float *nearest = nullptr;
@@ -28,18 +28,18 @@ inline array_1d<float> nearest_neighbor(const array_2d<float> &data, const array
         }
     }
 
-    return as_array_1d<float>(nearest, query.length);
+    return Array1d<float>{nearest, query.length};
 }
 
 template <template <typename> typename S>
-float calculate_ann_accuracy(const array_2d<float> &array, Index<float, S> &index, const unsigned int K = 100) {
+float calculate_ann_accuracy(const Array2d<float> &array, Index<float, S> &index, const unsigned int K = 100) {
     unsigned int correct = 0;
     float *query_data = new float[d];
-    array_1d<float> query = as_array_1d<float>(query_data, d);
+    Array1d<float> query{query_data, d};
     for (unsigned int k = 0; k < K; ++k) {
         for (unsigned int i = 0; i < d; ++i) query_data[i] = random_normal();
-        array_1d<float> nn_real = nearest_neighbor(array, query);
-        array_1d<float> nn = index.search(query);
+        Array1d<float> nn_real = nearest_neighbor(array, query);
+        Array1d<float> nn = index.search(query);
         correct += all_close(nn_real, nn) ? 1 : 0;
     }
     delete query_data;
@@ -47,7 +47,7 @@ float calculate_ann_accuracy(const array_2d<float> &array, Index<float, S> &inde
 }
 
 int main(void) {
-    array_2d<float> array = allocate_array_2d<float>(n, d);
+    Array2d<float> array = allocate_array_2d<float>(n, d);
 
     Stopwatch stopwatch;
 

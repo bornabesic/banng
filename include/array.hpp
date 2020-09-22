@@ -6,13 +6,13 @@
 // --------------------------------- 2D Array ---------------------------------
 
 template <typename T>
-struct array_2d {
+struct Array2d {
     T **data;
     unsigned int rows, cols;
 };
 
 template <typename T>
-array_2d<T> allocate_array_2d(const unsigned int rows,
+Array2d<T> allocate_array_2d(const unsigned int rows,
                               const unsigned int cols) {
 
     T *data = new T[rows * cols];
@@ -25,7 +25,7 @@ array_2d<T> allocate_array_2d(const unsigned int rows,
 }
 
 template <typename T>
-void print_array_2d(const struct array_2d<T> &array) {
+void print_array(const Array2d<T> &array) {
     for (unsigned int i = 0; i < array.rows; ++i) {
         for (unsigned int j = 0; j < array.cols; ++j)
             std::cout << array.data[i][j] << ' ';
@@ -34,7 +34,7 @@ void print_array_2d(const struct array_2d<T> &array) {
 }
 
 template <typename T>
-void free_array_2d(const struct array_2d<T> &array) {
+void free_array_2d(const Array2d<T> &array) {
     delete array.data[0];
     delete array.data;
 }
@@ -42,25 +42,20 @@ void free_array_2d(const struct array_2d<T> &array) {
 // --------------------------------- 1D Array ---------------------------------
 
 template <typename T>
-struct array_1d {
+struct Array1d {
     T *data;
     unsigned int length;
 };
 
 template <typename T>
-struct array_1d<T> as_array_1d(T *data, unsigned int length) {
-    return {data, length};
-}
-
-template <typename T>
-void print_array_1d(const struct array_1d<T> &array) {
+void print_array(const Array1d<T> &array) {
     for (unsigned int i = 0; i < array.length; ++i)
         std::cout << array.data[i] << ' ';
     std::cout << '\n';
 }
 
 template <typename T>
-bool all_close(const array_1d<T> &v1, const array_1d<T> &v2, T eps = 1e-6) {
+bool all_close(const Array1d<T> &v1, const Array1d<T> &v2, T eps = 1e-6) {
     assert(v1.length == v2.length);
     for (unsigned int i = 0; i < v1.length; ++i)
         if (v1.data[i] - v2.data[i] > eps)

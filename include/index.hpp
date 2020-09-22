@@ -18,7 +18,7 @@ class Split {
     virtual std::pair<std::vector<T *> *, std::vector<T *> *>
     split(T **data, const unsigned int n, const unsigned int d) = 0;
 
-    virtual bool descend_left(const array_1d<T> &query) const = 0;
+    virtual bool descend_left(const Array1d<T> &query) const = 0;
 };
 
 template <typename T>
@@ -58,7 +58,7 @@ class AxisAlignedSplit : public Split<T> {
         return {left, right};
     }
 
-    bool descend_left(const array_1d<T> &query) const override {
+    bool descend_left(const Array1d<T> &query) const override {
         return (query.data[this->axis] < this->value);
     }
 };
@@ -106,9 +106,9 @@ class Index {
         return node;
     }
 
-    array_1d<T> _search_tree(const array_1d<T> &query, const Node<T> *tree) const {
+    Array1d<T> _search_tree(const Array1d<T> &query, const Node<T> *tree) const {
         if (tree->is_leaf)
-            return as_array_1d(tree->data, query.length);
+            return Array1d<T>{tree->data, query.length};
 
         if (tree->split->descend_left(query))
             return _search_tree(query, tree->left);
@@ -119,11 +119,11 @@ class Index {
   public:
     Index() : tree(nullptr) {}
 
-    void build(const array_2d<T> &array) {
+    void build(const Array2d<T> &array) {
         this->tree = this->_build_tree(array.data, array.rows, array.cols);
     }
 
-    array_1d<T> search(const array_1d<T> &query) const {
+    Array1d<T> search(const Array1d<T> &query) const {
         return this->_search_tree(query, this->tree);
     }
 };

@@ -80,8 +80,10 @@ class Node {
           is_leaf(false) {}
 };
 
-template <typename T>
+template <typename T, typename S>
 class Index {
+  static_assert(std::is_base_of<Split<T>, S>::value, "Class S should be an instance of Split<T>!");
+
   private:
     Node<T> *tree;
 
@@ -92,7 +94,7 @@ class Index {
             return new Node<T>(*data);
         }
 
-        AxisAlignedSplit<T> *split = new AxisAlignedSplit<T>(d, depth); // TODO
+        Split<T> *split = new S(d, depth);
         auto subspaces = split->split(data, n, d);
         Node<T> *node = new Node<T>(
             split, this->_build_tree(subspaces.first->data(),

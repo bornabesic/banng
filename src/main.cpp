@@ -34,15 +34,14 @@ inline Array1d<float> nearest_neighbor(const Array2d<float> &data, const Array1d
 template <template <typename> typename S>
 float calculate_ann_accuracy(const Array2d<float> &array, Index<float, S> &index, const unsigned int K = 100) {
     unsigned int correct = 0;
-    float *query_data = new float[d];
-    Array1d<float> query{query_data, d};
+    std::vector<float> query_data(d);
+    Array1d<float> query{query_data.data(), d};
     for (unsigned int k = 0; k < K; ++k) {
         for (unsigned int i = 0; i < d; ++i) query_data[i] = random_normal();
         Array1d<float> nn_real = nearest_neighbor(array, query);
         Array1d<float> nn = index.search(query);
         correct += all_close(nn_real, nn) ? 1 : 0;
     }
-    delete query_data;
     return ((float) correct) / K;
 }
 

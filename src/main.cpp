@@ -31,7 +31,8 @@ inline array_1d<float> nearest_neighbor(const array_2d<float> &data, const array
     return as_array_1d<float>(nearest, query.length);
 }
 
-float calculate_ann_accuracy(const array_2d<float> &array, Index<float> &index, const unsigned int K = 100) {
+template <typename S>
+float calculate_ann_accuracy(const array_2d<float> &array, Index<float, S> &index, const unsigned int K = 100) {
     unsigned int correct = 0;
     float *query_data = new float[d];
     array_1d<float> query = as_array_1d<float>(query_data, d);
@@ -56,7 +57,7 @@ int main(void) {
     std::cout << "Random data generation for " << n << " x " << d << " array took " << stopwatch.checkpoint() << " s" << '\n';
     std::cout << n * d * sizeof(float) / 1024.f / 1024.f << " MB" << '\n';
 
-    Index<float> index;
+    Index<float, AxisAlignedSplit<float>> index;
     stopwatch.checkpoint();
     index.build(array);
     std::cout << "Building the index took " << stopwatch.checkpoint() << " s" << '\n';

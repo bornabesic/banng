@@ -9,7 +9,8 @@
 namespace py = pybind11;
 
 PYBIND11_MODULE(banng, m) {
-    py::class_<Array2d<float>>(m, "Array2d", py::buffer_protocol())
+    py::module m_float = m.def_submodule("float");
+    py::class_<Array2d<float>>(m_float, "Array2d", py::buffer_protocol())
         .def_buffer([](Array2d<float> &a) -> py::buffer_info {
             return py::buffer_info(
                 *a.data,                                /* Pointer to buffer */

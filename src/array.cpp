@@ -34,8 +34,6 @@ namespace py = pybind11;
                                                                                                 \
             const unsigned int rows = info.shape[0];                                            \
             const unsigned int cols = info.shape[1];                                            \
-            assert(info.strides[0] == cols * sizeof(type));                                     \
-            assert(info.strides[1] == sizeof(type));                                            \
                                                                                                 \
             type *data = (type*) info.ptr;                                                      \
                                                                                                 \

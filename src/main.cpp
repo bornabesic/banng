@@ -18,17 +18,17 @@ inline Array1d<float> nearest_neighbor(const Array2d<float> &data, const Array1d
     for (unsigned int i = 0; i < data.rows; ++i) {
         float l2_squared = 0;
         for (unsigned int j = 0; j < data.cols; ++j) {
-            float delta = data.data[i][j] - query.data[j];
+            float delta = data(i, j) - query(j);
             l2_squared += delta * delta;
         }
 
         if (l2_squared_best == -1 || l2_squared < l2_squared_best) {
-            nearest = data.data[i];
+            nearest = data(i);
             l2_squared_best = l2_squared;
         }
     }
 
-    return Array1d<float>{nearest, query.length};
+    return Array1d<float>{nearest, query.length, data.stride_cols};
 }
 
 template <template <typename> typename S>
@@ -51,8 +51,9 @@ int main(void) {
     Stopwatch stopwatch;
 
     stopwatch.checkpoint();
-    for (unsigned int i = 0; i < n * d; ++i)
-        array.data[0][i] = random_normal();
+    for (unsigned int i = 0; i < n; ++i)
+        for (unsigned int j = 0; j < d; ++j)
+            array(i, j) = random_normal();
     std::cout << "Random data generation for " << n << " x " << d << " array took " << stopwatch.checkpoint() << " s" << '\n';
     std::cout << n * d * sizeof(float) / 1024.f / 1024.f << " MB" << '\n';
 

@@ -13,14 +13,15 @@ namespace py = pybind11;
     py::class_<Array2d<type>>(m_sub, "Array2d", py::buffer_protocol())                          \
         .def_buffer([](Array2d<type> &a) -> py::buffer_info {                                   \
             return py::buffer_info(                                                             \
-                *a.data,                               /* Pointer to buffer */                  \
+                a.data,                                /* Pointer to buffer */                  \
                 sizeof(type),                          /* Size of one scalar */                 \
                 py::format_descriptor<type>::format(), /* Python struct-style /                 \
-                                                        format descriptor */                    \
-                2,                       /* Number of dimensions */                             \
-                {a.rows, a.cols},        /* Buffer dimensions */                                \
-                {sizeof(type) * a.cols, /* Strides (in bytes) for each index */                 \
-                sizeof(type)});                                                                 \
+                                                       format descriptor */                     \
+                2,                                     /* Number of dimensions */               \
+                {a.rows, a.cols},                      /* Buffer dimensions */                  \
+                {sizeof(type) * a.stride_rows,         /* Strides (in bytes) for each index */  \
+                sizeof(type) * a.stride_cols}                                                   \
+            );                                                                                  \
         })                                                                                      \
         .def("allocate", &Array2d<type>::allocate)                                              \
         .def("free", &Array2d<type>::free)                                                      \
@@ -37,9 +38,6 @@ namespace py = pybind11;
             assert(info.strides[1] == sizeof(type));                                            \
                                                                                                 \
             type *data = (type*) info.ptr;                                                      \
-            type **row_ptrs = new type*[rows];                                                  \
-            for (unsigned int i = 0; i < rows; ++i)                                             \
-                row_ptrs[i] = data + cols * i;                                                  \
                                                                                                 \
             if (verbose) {                                                                      \
                 std::cout << "Format: " << info.format << '\n';                                 \
@@ -48,7 +46,11 @@ namespace py = pybind11;
                 std::cout << "Size: " << info.size << '\n';                                     \
             }                                                                                   \
                                                                                                 \
-            return {row_ptrs, rows, cols};                                                      \
+            return {                                                                            \
+                data,                                                                           \
+                rows, cols,                                                                     \
+                info.strides[0] / sizeof(type), info.strides[1] / sizeof(type)                  \
+            };                                                                                  \
         }, py::arg("verbose") = false);                                                         \
 }
 

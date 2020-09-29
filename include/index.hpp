@@ -73,11 +73,11 @@ class Node {
     T *data;
 
     Node(T *data)
-        : split(nullptr), data(data), left(nullptr), right(nullptr),
-          is_leaf(true) {}
+        : split(nullptr), left(nullptr), right(nullptr), is_leaf(true),
+          data(data) {}
     Node(Split<T> *split, Node<T> *left, Node<T> *right)
-        : split(split), data(nullptr), left(left), right(right),
-          is_leaf(false) {}
+        : split(split), left(left), right(right), is_leaf(false),
+          data(nullptr) {}
 };
 
 template <typename T, template <typename> typename S>
@@ -120,7 +120,11 @@ class Index {
     Index() : tree(nullptr) {}
 
     void build(const Array2d<T> &array) {
-        this->tree = this->_build_tree(array.data, array.rows, array.cols);
+        std::vector<T *> row_ptrs(array.rows);
+        for (unsigned int i = 0; i < array.rows; ++i)
+            row_ptrs[i] = array(i);
+
+        this->tree = this->_build_tree(row_ptrs.data(), array.rows, array.cols);
     }
 
     Array1d<T> search(const Array1d<T> &query) const {

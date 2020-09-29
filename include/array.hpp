@@ -35,33 +35,37 @@ struct Array1d {
         print_char('\n');
     }
 
-    static T l2_distance(const Array1d<T> &a1, const Array1d<T> &a2) {
-        assert(a1.length == a2.length);
-        const unsigned int rounds = a1.length / 8;
-        const unsigned int left = a1.length % 8;
-
-        T distance = 0;
-        std::array<T, 8> result;
-        unsigned int i = 0;
-        for (unsigned int round = 0; round < rounds; ++round) {
-            __m256 v1 = _mm256_loadu_ps(a1.data + i);
-            __m256 v2 = _mm256_loadu_ps(a2.data + i);
-            __m256 v = _mm256_sub_ps(v1, v2);
-            v = _mm256_mul_ps(v, v);
-
-            _mm256_storeu_ps(result.data(), v);
-            for (const auto &e : result) distance += e;
-            i += 8;
-        }
-
-        for (unsigned int i = a1.length - 1; i > a1.length - left; --i) {
-            float delta = a1(i) - a2(i);
-            distance += delta * delta;
-        }
-
-        return distance;
-    }
+    static T l2_distance(const Array1d<T> &a1, const Array1d<T> &a2);
 };
+
+template <>
+float Array1d<float>::l2_distance(const Array1d<float> &a1, const Array1d<float> &a2) {
+    assert(a1.length == a2.length);
+    const unsigned int rounds = a1.length / 8;
+    const unsigned int left = a1.length % 8;
+
+    float distance = 0;
+    std::array<float, 8> result;
+    unsigned int offset = 0;
+    __m256 v;
+    for (unsigned int round = 0; round < rounds; ++round) {
+        v = _mm256_sub_ps(
+            _mm256_loadu_ps(a1.data + offset),
+            _mm256_loadu_ps(a2.data + offset)
+        );
+        _mm256_storeu_ps(result.data(), _mm256_mul_ps(v, v));
+
+        for (const auto &e : result) distance += e;
+        offset += 8;
+    }
+
+    for (unsigned int i = a1.length - 1; i > a1.length - left; --i) {
+        float delta = a1(i) - a2(i);
+        distance += delta * delta;
+    }
+
+    return distance;
+}
 
 template <typename T>
 bool all_close(const Array1d<T> &v1, const Array1d<T> &v2, T eps = 1e-6) {

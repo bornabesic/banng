@@ -12,5 +12,7 @@ endif()
 
 message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 
+add_subdirectory(lib/pybind11)
+
 include_directories(include/)
 add_subdirectory(src/)

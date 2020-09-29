@@ -122,7 +122,7 @@ class Index {
     void build(const Array2d<T> &array) {
         std::vector<T *> row_ptrs(array.rows);
         for (unsigned int i = 0; i < array.rows; ++i)
-            row_ptrs[i] = array(i);
+            row_ptrs[i] = array(i).data;
 
         this->tree = this->_build_tree(row_ptrs.data(), array.rows, array.cols);
     }

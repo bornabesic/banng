@@ -2,6 +2,12 @@
 
 #include <cassert>
 #include <iostream>
+#include <functional>
+
+// --------------------------------- Printing ---------------------------------
+
+using std::placeholders::_1;
+auto print_char = std::bind(std::putc, _1, stdout);
 
 // --------------------------------- 2D Array ---------------------------------
 
@@ -35,11 +41,13 @@ struct Array2d {
         delete[] array.data;
     }
 
-    static void print(const Array2d<T> &array) {
+    static void print(const Array2d<T> &array, const char *format = "%.4f") {
         for (unsigned int i = 0; i < array.rows; ++i) {
-            for (unsigned int j = 0; j < array.cols; ++j)
-                std::cout << array(i, j) << ' ';
-            std::cout << '\n';
+            for (unsigned int j = 0; j < array.cols; ++j) {
+                std::printf(format, array(i, j));
+                print_char(' ');
+            }
+            print_char('\n');
         }
     }
 };
@@ -60,10 +68,12 @@ struct Array1d {
         return data[stride * i];
     }
 
-    static void print(const Array1d<T> &array) {
-        for (unsigned int i = 0; i < array.length; ++i)
-            std::cout << array(i) << ' ';
-        std::cout << '\n';
+    static void print(const Array1d<T> &array, const char *format = "%.4f") {
+        for (unsigned int i = 0; i < array.length; ++i) {
+            std::printf(format, array(i));
+            print_char(' ');
+        }
+        print_char('\n');
     }
 };
 

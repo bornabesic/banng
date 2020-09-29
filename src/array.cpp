@@ -25,7 +25,7 @@ namespace py = pybind11;
         })                                                                                      \
         .def("allocate", &Array2d<type>::allocate)                                              \
         .def("free", &Array2d<type>::free)                                                      \
-        .def("print", &Array2d<type>::print)                                                    \
+        .def("print", &Array2d<type>::print, py::arg("format") = "%.4f")                                                    \
         .def("from_numpy", [](py::buffer buffer, bool verbose = false) -> Array2d<type> {       \
             const py::buffer_info info = buffer.request();                                      \
                                                                                                 \

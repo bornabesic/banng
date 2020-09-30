@@ -5,7 +5,6 @@
 #include <functional>
 #include <immintrin.h>
 
-
 // --------------------------------- Printing ---------------------------------
 
 using std::placeholders::_1;
@@ -45,20 +44,26 @@ float Array1d<float>::l2_distance(const Array1d<float> &a1, const Array1d<float>
     const unsigned int left = a1.length % 8;
 
     float distance = 0;
-    std::array<float, 8> result;
+
+    // Blocks
     unsigned int offset = 0;
-    __m256 v;
+    __m256 total = {0};
+    __m256 delta;
     for (unsigned int round = 0; round < rounds; ++round) {
-        v = _mm256_sub_ps(
+        delta = _mm256_sub_ps(
             _mm256_loadu_ps(a1.data + offset),
             _mm256_loadu_ps(a2.data + offset)
         );
-        _mm256_storeu_ps(result.data(), _mm256_mul_ps(v, v));
-
-        for (const auto &e : result) distance += e;
+        total = _mm256_add_ps(total, _mm256_mul_ps(delta, delta));
         offset += 8;
     }
 
+    // Horizontal addition
+    std::array<float, 8> result;
+    _mm256_storeu_ps(result.data(), total);
+    for (const auto &e : result) distance += e;
+
+    // Rest
     for (unsigned int i = a1.length - 1; i > a1.length - left; --i) {
         float delta = a1(i) - a2(i);
         distance += delta * delta;

@@ -41,7 +41,6 @@ template <>
 float Array1d<float>::l2_distance(const Array1d<float> &a1, const Array1d<float> &a2) {
     assert(a1.length == a2.length);
     const unsigned int rounds = a1.length / 8;
-    const unsigned int left = a1.length % 8;
 
     float distance = 0;
 
@@ -64,9 +63,10 @@ float Array1d<float>::l2_distance(const Array1d<float> &a1, const Array1d<float>
     for (const auto &e : result) distance += e;
 
     // Rest
-    for (unsigned int i = a1.length - 1; i > a1.length - left; --i) {
-        float delta = a1(i) - a2(i);
+    while (offset < a1.length) {
+        float delta = a1(offset) - a2(offset);
         distance += delta * delta;
+        ++offset;
     }
 
     return distance;

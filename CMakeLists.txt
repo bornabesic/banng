@@ -16,3 +16,8 @@ add_subdirectory(lib/pybind11)
 
 include_directories(include/)
 add_subdirectory(src/)
+
+enable_testing()
+include_directories(lib/googletest/googletest/include)
+add_subdirectory(lib/googletest)
+add_subdirectory(test/)

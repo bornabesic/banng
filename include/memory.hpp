@@ -1,7 +1,9 @@
+#pragma once
 
 #include <cassert>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/mman.h>
 
 template <typename T>
 class Memory {
@@ -29,6 +31,8 @@ class Memory {
     T &operator[](unsigned int i) const { return *(this->data + i); }
 
     T *operator+(unsigned int i) const { return this->data + i; }
+
+    operator T *() const { return this->data; }
 
     virtual ~Memory(){};
 };

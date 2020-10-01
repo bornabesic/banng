@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <cassert>
 #include <iostream>
 #include <functional>
@@ -87,28 +88,24 @@ bool all_close(const Array1d<T> &v1, const Array1d<T> &v2, T eps = 1e-6) {
 
 template <typename T>
 struct Array2d {
-    Memory<T> data;
+    std::shared_ptr<Memory<T>> data;
     unsigned int rows, cols;
     unsigned int stride_rows, stride_cols;
 
     T &operator()(unsigned int i, unsigned int j) {
-        return data[stride_rows * i + stride_cols * j];
+        return (*data)[stride_rows * i + stride_cols * j];
     }
 
     T operator()(unsigned int i, unsigned int j) const {
-        return data[stride_rows * i + stride_cols * j];
+        return (*data)[stride_rows * i + stride_cols * j];
     }
 
     Array1d<T> operator()(unsigned int i) const {
-        return {data + stride_rows * i, cols, stride_cols};
+        return {*data + stride_rows * i, cols, stride_cols};
     }
 
     static Array2d<T> allocate(unsigned int rows, unsigned int cols) {
-        RAM<T> data(rows * cols);
-        Array2d<T> array{std::move(data), rows, cols, cols, 1};
-
-        assert(&array(rows - 1, cols - 1) - &array(0, 0) + 1 == rows * cols);
-        return array;
+        return {std::make_shared<RAM<T>>(rows * cols), rows, cols, cols, 1};
     }
 
     static void print(const Array2d<T> &array, const char *format = "%.4f") {

@@ -5,6 +5,7 @@
 #include <pybind11/pybind11.h>
 
 #include <array.hpp>
+#include <memory.hpp>
 
 namespace py = pybind11;
 
@@ -13,7 +14,7 @@ namespace py = pybind11;
     py::class_<Array2d<type>>(m_sub, "Array2d", py::buffer_protocol())                          \
         .def_buffer([](Array2d<type> &a) -> py::buffer_info {                                   \
             return py::buffer_info(                                                             \
-                a.data,                                /* Pointer to buffer */                  \
+                *a.data,                               /* Pointer to buffer */                  \
                 sizeof(type),                          /* Size of one scalar */                 \
                 py::format_descriptor<type>::format(), /* Python struct-style /                 \
                                                        format descriptor */                     \
@@ -24,8 +25,7 @@ namespace py = pybind11;
             );                                                                                  \
         })                                                                                      \
         .def("allocate", &Array2d<type>::allocate)                                              \
-        .def("free", &Array2d<type>::free)                                                      \
-        .def("print", &Array2d<type>::print, py::arg("format") = "%.4f")                                                    \
+        .def("print", &Array2d<type>::print, py::arg("format") = "%.4f")                        \
         .def("from_numpy", [](py::buffer buffer, bool verbose = false) -> Array2d<type> {       \
             const py::buffer_info info = buffer.request();                                      \
                                                                                                 \
@@ -35,7 +35,6 @@ namespace py = pybind11;
             const unsigned int rows = info.shape[0];                                            \
             const unsigned int cols = info.shape[1];                                            \
                                                                                                 \
-            type *data = (type*) info.ptr;                                                      \
                                                                                                 \
             if (verbose) {                                                                      \
                 std::cout << "Format: " << info.format << '\n';                                 \
@@ -45,7 +44,7 @@ namespace py = pybind11;
             }                                                                                   \
                                                                                                 \
             return {                                                                            \
-                data,                                                                           \
+                std::make_shared<Memory<type>>((type *)info.ptr, info.size),                    \
                 rows, cols,                                                                     \
                 info.strides[0] / sizeof(type), info.strides[1] / sizeof(type)                  \
             };                                                                                  \

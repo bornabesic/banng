@@ -5,6 +5,8 @@
 #include <functional>
 #include <immintrin.h>
 
+#include <memory.hpp>
+
 // --------------------------------- Printing ---------------------------------
 
 using std::placeholders::_1;
@@ -85,7 +87,7 @@ bool all_close(const Array1d<T> &v1, const Array1d<T> &v2, T eps = 1e-6) {
 
 template <typename T>
 struct Array2d {
-    T *data;
+    Memory<T> data;
     unsigned int rows, cols;
     unsigned int stride_rows, stride_cols;
 
@@ -102,15 +104,11 @@ struct Array2d {
     }
 
     static Array2d<T> allocate(unsigned int rows, unsigned int cols) {
-        T *data = new T[rows * cols];
-        Array2d<T> array{data, rows, cols, cols, 1};
+        RAM<T> data(rows * cols);
+        Array2d<T> array{std::move(data), rows, cols, cols, 1};
 
         assert(&array(rows - 1, cols - 1) - &array(0, 0) + 1 == rows * cols);
         return array;
-    }
-
-    static void free(const Array2d<T> &array) {
-        delete[] array.data;
     }
 
     static void print(const Array2d<T> &array, const char *format = "%.4f") {

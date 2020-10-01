@@ -22,7 +22,7 @@ class Split {
 
     virtual bool descend_left(const Array1d<T> &query) const = 0;
 
-    virtual T distance_to_hyperplane(const Array1d<T> &query) const = 0;
+    virtual T distance_to_boundary(const Array1d<T> &query) const = 0;
 };
 
 template <typename T>
@@ -90,7 +90,7 @@ class AxisAlignedSplit : public Split<T> {
         return (query(this->axis) < this->value);
     }
 
-    T distance_to_hyperplane(const Array1d<T> &query) const override {
+    T distance_to_boundary(const Array1d<T> &query) const override {
         return std::abs(query(this->axis) - this->value);
     }
 };
@@ -159,7 +159,7 @@ class Index {
         const Node<T> *other = !dl ? tree->left : tree->right;
 
         _search_tree(query, destination, nearest, max_distance);
-        auto distance = tree->split->distance_to_hyperplane(*nearest);
+        auto distance = tree->split->distance_to_boundary(*nearest);
         distance *= distance;
         if (distance < *max_distance) {
             std::shared_ptr<T> max_distance_potential(nullptr);

@@ -24,7 +24,10 @@ namespace py = pybind11;
                 sizeof(type) * a.stride_cols}                                                   \
             );                                                                                  \
         })                                                                                      \
-        .def("allocate", &Array2d<type>::allocate)                                              \
+        .def("allocate", (Array2d<type> (*)(unsigned int, unsigned int))                        \
+                         &Array2d<type>::allocate)                                              \
+        .def("allocate", (Array2d<type> (*)(unsigned int, unsigned int, const std::string &))   \
+                         &Array2d<type>::allocate)                                              \
         .def("print", &Array2d<type>::print, py::arg("format") = "%.4f")                        \
         .def("from_numpy", [](py::buffer buffer, bool verbose = false) -> Array2d<type> {       \
             const py::buffer_info info = buffer.request();                                      \

@@ -108,6 +108,10 @@ struct Array2d {
         return {std::make_shared<RAM<T>>(rows * cols), rows, cols, cols, 1};
     }
 
+    static Array2d<T> allocate(unsigned int rows, unsigned int cols, const std::string &filename) {
+        return {std::make_shared<Disk<T>>(rows * cols, filename), rows, cols, cols, 1};
+    }
+
     static void print(const Array2d<T> &array, const char *format = "%.4f") {
         for (unsigned int i = 0; i < array.rows; ++i) {
             for (unsigned int j = 0; j < array.cols; ++j) {

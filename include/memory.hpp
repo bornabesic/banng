@@ -15,21 +15,21 @@ class Memory {
     Memory() : data(nullptr), size(0), owned(false) {}
 
   public:
-    Memory(Memory<T> &other) {
-        this->data = other.data;
-        this->size = other.size;
-        this->owned = true;
+    // Memory(Memory<T> &other) {
+    //     this->data = other.data;
+    //     this->size = other.size;
+    //     this->owned = other.owned;
 
-        other.owned = false;
-    }
+    //     other.owned = false;
+    // }
 
-    Memory(Memory<T> &&other) {
-        this->data = other.data;
-        this->size = other.size;
-        this->owned = true;
+    // Memory(Memory<T> &&other) {
+    //     this->data = other.data;
+    //     this->size = other.size;
+    //     this->owned = other.owned;
 
-        other.owned = false;
-    }
+    //     other.owned = false;
+    // }
 
     Memory(T *data, unsigned int size)
         : data(data), size(size), owned(false) {}

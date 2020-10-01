@@ -10,7 +10,15 @@ class Memory {
     unsigned int size;
     bool owned;
 
-    Memory() = default;
+    Memory() : data(nullptr), size(0), owned(false) {}
+
+    Memory(Memory<T> &other) {
+        this->data = other.data;
+        this->size = other.size;
+        this->owned = true;
+
+        other.owned = false;
+    }
 
   public:
     Memory(T *data, unsigned int size)

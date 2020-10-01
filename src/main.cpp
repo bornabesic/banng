@@ -64,9 +64,10 @@ int main(void) {
     index.build(array);
     std::cout << "Building the index took " << stopwatch.checkpoint() << " s" << '\n';
 
+    stopwatch.checkpoint();
     float accuracy = calculate_ann_accuracy(array, index);
+    std::cout << "Calculating accuracy took " << stopwatch.checkpoint() << " s" << '\n';
     std::cout << "Accuracy: " << accuracy * 100.f << " %" << '\n';
 
-    Array2d<float>::free(array);
     return 0;
 }

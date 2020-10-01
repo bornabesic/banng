@@ -2,6 +2,8 @@
 
 #include <utility>
 #include <vector>
+#include <cmath>
+#include <memory>
 
 #include <array.hpp>
 
@@ -19,6 +21,8 @@ class Split {
     split(T **data, const unsigned int n, const unsigned int d) = 0;
 
     virtual bool descend_left(const Array1d<T> &query) const = 0;
+
+    virtual T distance_to_hyperplane(const Array1d<T> &query) const = 0;
 };
 
 template <typename T>
@@ -37,8 +41,32 @@ class AxisAlignedSplit : public Split<T> {
     std::pair<std::vector<T *> *, std::vector<T *> *>
     split(T **data, const unsigned int n, const unsigned int d) override {
         T sum = 0;
-        for (unsigned int i = 0; i < n; ++i)
-            sum += data[i][this->axis];
+        {
+            T max_spread = 0;
+            for (unsigned int j = 0; j < d; ++j) {
+                T min = data[0][j];
+                T max = min;
+                T axis_sum = 0;
+                for (unsigned int i = 0; i < n; ++i) {
+                    if (data[i][j] < min) {
+                        min = data[i][j];
+                    }
+                    else if (data[i][j] > max) {
+                        max = data[i][j];
+                    }
+                    axis_sum += data[i][j];
+                }
+                T spread = max - min;
+                if (spread > max_spread) {
+                    max_spread = spread;
+                    sum = axis_sum;
+                    this->axis = j;
+                }
+            }
+        }
+
+        // for (unsigned int i = 0; i < n; ++i)
+        //     sum += data[i][this->axis];
         T mean = sum / n;
         this->value = mean;
 
@@ -59,7 +87,11 @@ class AxisAlignedSplit : public Split<T> {
     }
 
     bool descend_left(const Array1d<T> &query) const override {
-        return (query.data[this->axis] < this->value);
+        return (query(this->axis) < this->value);
+    }
+
+    T distance_to_hyperplane(const Array1d<T> &query) const override {
+        return std::abs(query(this->axis) - this->value);
     }
 };
 
@@ -86,6 +118,7 @@ class Index {
 
   private:
     Node<T> *tree;
+    unsigned int stride;
 
     Node<T> *_build_tree(T **data, const unsigned int n, const unsigned int d,
                          const unsigned int depth = 0) {
@@ -106,14 +139,37 @@ class Index {
         return node;
     }
 
-    Array1d<T> _search_tree(const Array1d<T> &query, const Node<T> *tree) const {
-        if (tree->is_leaf)
-            return Array1d<T>{tree->data, query.length};
+    void _search_tree(const Array1d<T> &query, const Node<T> *tree, std::shared_ptr<Array1d<T>> &nearest, std::shared_ptr<float> &max_distance) const {
+        if (tree->is_leaf) {
+            std::shared_ptr<Array1d<T>> target(new Array1d<T>{tree->data, query.length, this->stride});
+            const float distance = Array1d<T>::l2_distance(query, *target);
+            if (max_distance.get() == nullptr) {
+                max_distance = std::make_shared<T>(distance);
+                nearest = target;
+            }
+            else if (distance < *max_distance) {
+                *max_distance = distance;
+                nearest = target;
+            }
+            return;
+        }
 
-        if (tree->split->descend_left(query))
-            return _search_tree(query, tree->left);
-        else
-            return _search_tree(query, tree->right);
+        const bool dl = tree->split->descend_left(query);
+        const Node<T> *destination = dl ? tree->left : tree->right;
+        const Node<T> *other = !dl ? tree->left : tree->right;
+
+        _search_tree(query, destination, nearest, max_distance);
+        auto distance = tree->split->distance_to_hyperplane(*nearest);
+        distance *= distance;
+        if (distance < *max_distance) {
+            std::shared_ptr<T> max_distance_potential(nullptr);
+            std::shared_ptr<Array1d<T>> potential_nearest(nullptr);
+            _search_tree(query, other, potential_nearest, max_distance_potential);
+            if (*max_distance_potential < *max_distance) {
+                *max_distance = *max_distance_potential;
+                nearest = potential_nearest;
+            }
+        }
     }
 
   public:
@@ -125,10 +181,14 @@ class Index {
             row_ptrs[i] = array(i).data;
 
         this->tree = this->_build_tree(row_ptrs.data(), array.rows, array.cols);
+        this->stride = array.stride_cols;
     }
 
     Array1d<T> search(const Array1d<T> &query) const {
-        return this->_search_tree(query, this->tree);
+        std::shared_ptr<T> max_distance(nullptr);
+        std::shared_ptr<Array1d<T>> nearest(nullptr);
+        this->_search_tree(query, this->tree, nearest, max_distance);
+        return *nearest;
     }
 };
 

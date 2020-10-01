@@ -33,7 +33,7 @@ inline Array1d<float> nearest_neighbor(const Array2d<float> &data, const Array1d
     return nearest;
 }
 
-template <template <typename> typename S>
+template <template <typename> class S>
 float calculate_ann_accuracy(const Array2d<float> &array, Index<float, S> &index, const unsigned int K = 100) {
     unsigned int correct = 0;
     std::vector<float> query_data(d);

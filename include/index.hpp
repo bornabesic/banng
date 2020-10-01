@@ -80,7 +80,7 @@ class Node {
           data(nullptr) {}
 };
 
-template <typename T, template <typename> typename S>
+template <typename T, template <typename> class S>
 class Index {
   static_assert(std::is_base_of<Split<T>, S<T>>::value, "Class S<T> should be an instance of Split<T>!");
 

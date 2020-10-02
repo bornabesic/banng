@@ -16,14 +16,7 @@ inline Array1d<float> nearest_neighbor(const Array2d<float> &data, const Array1d
     Array1d<float> nearest;
     float l2_squared_best = -1;
     for (unsigned int i = 0; i < data.rows; ++i) {
-        // float l2_squared = 0;
-        // for (unsigned int j = 0; j < data.cols; ++j) {
-        //     float delta = data(i, j) - query(j);
-        //     l2_squared += delta * delta;
-        // }
-
         float l2_squared = Array1d<float>::l2_distance(data(i), query);
-
         if (l2_squared_best == -1 || l2_squared < l2_squared_best) {
             nearest = data(i);
             l2_squared_best = l2_squared;

@@ -40,6 +40,17 @@ struct Array1d {
     static T l2_distance(const Array1d<T> &a1, const Array1d<T> &a2);
 };
 
+template <typename T>
+T Array1d<T>::l2_distance(const Array1d<T> &a1, const Array1d<T> &a2) {
+    assert(a1.length == a2.length);
+    T distance = 0;
+    for (unsigned int i = 0; i < a1.length; ++i) {
+        T delta = a1(i) - a2(i);
+        distance += delta * delta;
+    }
+    return distance;
+}
+
 template <>
 float Array1d<float>::l2_distance(const Array1d<float> &a1, const Array1d<float> &a2) {
     assert(a1.length == a2.length);

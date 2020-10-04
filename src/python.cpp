@@ -10,6 +10,47 @@
 
 namespace py = pybind11;
 
+#define EXPORT_ARRAY_2D(module, type) {                                                         \
+    py::module m_sub = module.def_submodule(#type);                                             \
+    py::class_<Array2d<type>>(m_sub, "Array2d", py::buffer_protocol())                          \
+        .def_buffer([](Array2d<type> &a) -> py::buffer_info {                                   \
+            return py::buffer_info(                                                             \
+                *a.data,                               /* Pointer to buffer */                  \
+                sizeof(type),                          /* Size of one scalar */                 \
+                py::format_descriptor<type>::format(), /* Python struct-style /                 \
+                                                       format descriptor */                     \
+                2,                                     /* Number of dimensions */               \
+                {a.rows, a.cols},                      /* Buffer dimensions */                  \
+                {sizeof(type) * a.stride_rows,         /* Strides (in bytes) for each index */  \
+                sizeof(type) * a.stride_cols}                                                   \
+            );                                                                                  \
+        })                                                                                      \
+        .def("allocate", (Array2d<type> (*)(unsigned int, unsigned int))                        \
+                         &Array2d<type>::allocate)                                              \
+        .def("allocate", (Array2d<type> (*)(unsigned int, unsigned int, const std::string &))   \
+                         &Array2d<type>::allocate)                                              \
+        .def("print", &Array2d<type>::print, py::arg("format") = "%.4f")                        \
+        .def("from_numpy", &numpy_to_array_2d<type>, py::arg("verbose") = false);               \
+}
+
+#define EXPORT_ARRAY_1D(module, type) {                                                         \
+    py::module m_sub = module.def_submodule(#type);                                             \
+    py::class_<Array1d<type>>(m_sub, "Array1d", py::buffer_protocol())                          \
+        .def_buffer([](Array1d<type> &a) -> py::buffer_info {                                   \
+            return py::buffer_info(                                                             \
+                a.data,                                /* Pointer to buffer */                  \
+                sizeof(type),                          /* Size of one scalar */                 \
+                py::format_descriptor<type>::format(), /* Python struct-style /                 \
+                                                       format descriptor */                     \
+                1,                                     /* Number of dimensions */               \
+                {a.length},                            /* Buffer dimensions */                  \
+                {sizeof(type) * a.stride}              /* Strides (in bytes) for each index */  \
+            );                                                                                  \
+        })                                                                                      \
+        .def("print", &Array1d<type>::print, py::arg("format") = "%.4f")                        \
+        .def("from_numpy", &numpy_to_array_2d<type>, py::arg("verbose") = false);               \
+}
+
 template <typename T>
 Array1d<T> numpy_to_array_1d(const py::buffer &buffer, bool verbose = false) {
     const py::buffer_info info = buffer.request();
@@ -26,8 +67,8 @@ Array1d<T> numpy_to_array_1d(const py::buffer &buffer, bool verbose = false) {
         std::cout << "Size: " << info.size << '\n';
     }
 
-    return { // TODO Make Array1d compatible with Memory
-        std::make_shared<Memory<T>>((T *)info.ptr, info.size),
+    return {
+        (T *) info.ptr,
         length,
         info.strides[0] / sizeof(T)
     };
@@ -57,32 +98,12 @@ Array2d<T> numpy_to_array_2d(const py::buffer &buffer, bool verbose = false) {
     };
 }
 
-#define EXPORT_ARRAY_2D(module, type) {                                                         \
-    py::module m_sub = module.def_submodule(#type);                                             \
-    py::class_<Array2d<type>>(m_sub, "Array2d", py::buffer_protocol())                          \
-        .def_buffer([](Array2d<type> &a) -> py::buffer_info {                                   \
-            return py::buffer_info(                                                             \
-                *a.data,                               /* Pointer to buffer */                  \
-                sizeof(type),                          /* Size of one scalar */                 \
-                py::format_descriptor<type>::format(), /* Python struct-style /                 \
-                                                       format descriptor */                     \
-                2,                                     /* Number of dimensions */               \
-                {a.rows, a.cols},                      /* Buffer dimensions */                  \
-                {sizeof(type) * a.stride_rows,         /* Strides (in bytes) for each index */  \
-                sizeof(type) * a.stride_cols}                                                   \
-            );                                                                                  \
-        })                                                                                      \
-        .def("allocate", (Array2d<type> (*)(unsigned int, unsigned int))                        \
-                         &Array2d<type>::allocate)                                              \
-        .def("allocate", (Array2d<type> (*)(unsigned int, unsigned int, const std::string &))   \
-                         &Array2d<type>::allocate)                                              \
-        .def("print", &Array2d<type>::print, py::arg("format") = "%.4f")                        \
-        .def("from_numpy", &numpy_to_array_2d<type>, py::arg("verbose") = false);               \
-}
-
 PYBIND11_MODULE(banng, module) {
     EXPORT_ARRAY_2D(module, float);
     EXPORT_ARRAY_2D(module, double);
+
+    EXPORT_ARRAY_1D(module, float);
+    EXPORT_ARRAY_1D(module, double);
 
     // TODO Make generic
     py::class_<Index<float, AxisAlignedSplit>>(module, "Index")
@@ -92,7 +113,7 @@ PYBIND11_MODULE(banng, module) {
         index.build(array);
     })
     .def("search", [](const Index<float, AxisAlignedSplit> &index, const py::buffer &buffer) -> Array1d<float> {
-        auto array = numpy_to_array_1d<float>(buffer);
+        auto array = numpy_to_array_1d<float>(buffer, true);
         return index.search(array);
     });
 }

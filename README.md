@@ -1,6 +1,13 @@
 # BANNG 💥
 Borna's Approximate Nearest Neighbor Gearbox
 
+# Requirements
+- [C++11](https://en.cppreference.com/w/cpp/11)-compatible compiler
+- [AVX](https://en.wikipedia.org/wiki/Advanced_Vector_Extensions)-compatible CPU
+- [CMake](https://cmake.org/)
+- [Python](https://www.python.org/)
+- [Linux-based OS](https://en.wikipedia.org/wiki/List_of_Linux_distributions)
+
 # Building
 ```sh
 git clone --recursive https://github.com/bornabesic/banng.git

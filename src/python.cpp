@@ -55,9 +55,8 @@ namespace py = pybind11;
 }
 
 #define EXPORT_INDEX(module, type, split) {                                                     \
-    py::module m_type = module.def_submodule(#type);                                            \
-    py::module m_split = m_split.def_submodule(#split);                                         \
-    py::class_<Index<type, split>>(m_split, "Index")                                            \
+    py::module m_sub = module.def_submodule(#type).def_submodule(#split);                       \
+    py::class_<Index<type, split>>(m_sub, "Index")                                              \
         .def(py::init<>())                                                                      \
         .def("build", [](Index<type, split> &index, const py::buffer &buffer) -> void {         \
             auto array = numpy_to_array_2d<type>(buffer);                                       \

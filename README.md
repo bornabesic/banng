@@ -3,6 +3,8 @@ Borna's Approximate Nearest Neighbor Gearbox
 
 # Building
 ```sh
+git clone --recursive https://github.com/bornabesic/banng.git
+cd banng
 mkdir build
 cd build
 cmake .. -D CMAKE_BUILD_TYPE=Release

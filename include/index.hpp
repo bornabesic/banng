@@ -139,10 +139,10 @@ class Index {
         return node;
     }
 
-    void _search_tree(const Array1d<T> &query, const Node<T> *tree, std::shared_ptr<Array1d<T>> &nearest, std::shared_ptr<float> &max_distance) const {
+    void _search_tree(const Array1d<T> &query, const Node<T> *tree, std::shared_ptr<Array1d<T>> &nearest, std::shared_ptr<T> &max_distance) const {
         if (tree->is_leaf) {
             std::shared_ptr<Array1d<T>> target(new Array1d<T>{tree->data, query.length, this->stride});
-            const float distance = Array1d<T>::l2_distance(query, *target);
+            const T distance = Array1d<T>::l2_distance(query, *target);
             if (max_distance.get() == nullptr) {
                 max_distance = std::make_shared<T>(distance);
                 nearest = target;

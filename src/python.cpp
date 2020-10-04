@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 
 #include <array.hpp>
 #include <memory.hpp>
@@ -30,7 +31,8 @@ namespace py = pybind11;
         .def("allocate", (Array2d<type> (*)(unsigned int, unsigned int, const std::string &))   \
                          &Array2d<type>::allocate)                                              \
         .def("print", &Array2d<type>::print, py::arg("format") = "%.4f")                        \
-        .def("from_numpy", &numpy_to_array_2d<type>, py::arg("verbose") = false);               \
+        .def("from_numpy", &numpy_to_array_2d<type>, py::arg("verbose") = false)                \
+        .def("numpy", &array_2d_to_numpy<type>);                                                \
 }
 
 #define EXPORT_ARRAY_1D(module, type) {                                                         \
@@ -48,7 +50,25 @@ namespace py = pybind11;
             );                                                                                  \
         })                                                                                      \
         .def("print", &Array1d<type>::print, py::arg("format") = "%.4f")                        \
-        .def("from_numpy", &numpy_to_array_2d<type>, py::arg("verbose") = false);               \
+        .def("from_numpy", &numpy_to_array_1d<type>, py::arg("verbose") = false)                \
+        .def("numpy", &array_1d_to_numpy<type>);                                                \
+}
+
+#define EXPORT_INDEX(module, type, split) {                                                     \
+    py::module m_type = module.def_submodule(#type);                                            \
+    py::module m_split = m_split.def_submodule(#split);                                         \
+    py::class_<Index<type, split>>(m_split, "Index")                                            \
+        .def(py::init<>())                                                                      \
+        .def("build", [](Index<type, split> &index, const py::buffer &buffer) -> void {         \
+            auto array = numpy_to_array_2d<type>(buffer);                                       \
+            index.build(array);                                                                 \
+        })                                                                                      \
+        .def("search", [](const Index<type, split> &index, const py::buffer &buffer)            \
+            -> py::array_t<type, py::array::c_style | py::array::forcecast> {                   \
+            auto array = numpy_to_array_1d<type>(buffer);                                       \
+            auto result = index.search(array);                                                  \
+            return array_1d_to_numpy(result);                                                   \
+        });                                                                                     \
 }
 
 template <typename T>
@@ -98,6 +118,24 @@ Array2d<T> numpy_to_array_2d(const py::buffer &buffer, bool verbose = false) {
     };
 }
 
+template <typename T>
+py::array_t<T, py::array::c_style | py::array::forcecast> array_2d_to_numpy(const Array2d<T> &array) {
+    return py::array_t<T, py::array::c_style | py::array::forcecast>(
+        {array.rows, array.cols},
+        {array.stride_rows * sizeof(T), array.stride_cols * sizeof(T)},
+        *array.data
+    );
+}
+
+template <typename T>
+py::array_t<T, py::array::c_style | py::array::forcecast> array_1d_to_numpy(const Array1d<T> &array) {
+    return py::array_t<T, py::array::c_style | py::array::forcecast>(
+            {array.length},
+            {array.stride * sizeof(T)},
+            array.data
+        );
+}
+
 PYBIND11_MODULE(banng, module) {
     EXPORT_ARRAY_2D(module, float);
     EXPORT_ARRAY_2D(module, double);
@@ -105,15 +143,6 @@ PYBIND11_MODULE(banng, module) {
     EXPORT_ARRAY_1D(module, float);
     EXPORT_ARRAY_1D(module, double);
 
-    // TODO Make generic
-    py::class_<Index<float, AxisAlignedSplit>>(module, "Index")
-    .def(py::init<>())
-    .def("build", [](Index<float, AxisAlignedSplit> &index, const py::buffer &buffer) -> void {
-        auto array = numpy_to_array_2d<float>(buffer);
-        index.build(array);
-    })
-    .def("search", [](const Index<float, AxisAlignedSplit> &index, const py::buffer &buffer) -> Array1d<float> {
-        auto array = numpy_to_array_1d<float>(buffer, true);
-        return index.search(array);
-    });
+    EXPORT_INDEX(module, float, AxisAlignedSplit);
+    EXPORT_INDEX(module, double, AxisAlignedSplit);
 }

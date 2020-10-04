@@ -5,4 +5,4 @@ add_library(time STATIC time.cpp)
 add_executable(main main.cpp)
 target_link_libraries(main random time)
 
-pybind11_add_module(banng array.cpp)
+pybind11_add_module(banng python.cpp)
